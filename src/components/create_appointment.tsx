@@ -1,14 +1,21 @@
 "use client";
 
-import { redirect } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 
 export default function CreateAppointment() {
+    const router = useRouter();
+
     return (
-        <button className='flex items-center gap-1 bg-blue-400 hover:bg-blue-300 active:bg-blue-800 px-2 py-1 h-12 rounded-md ' onClick={() => {
-            redirect('/create-appointment');
-        }}>
-            <div className='text-black'>Create Appointment</div>
-            <img src='/arrow.png' alt='get_started_arrow' className='h-4 w-4' />
+        <button
+            onClick={() => router.push('/create-appointment')}
+            className="w-full sm:w-auto px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-lg transition-all duration-200 transform hover:scale-105 flex items-center justify-center gap-2 group"
+        >
+            <span>Create Appointment</span>
+            <img
+                src="/arrow.png"
+                alt="arrow"
+                className="h-5 w-5 filter brightness-0 invert transition-transform duration-200 group-hover:translate-x-1"
+            />
         </button>
     );
 }
