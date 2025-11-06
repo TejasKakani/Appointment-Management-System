@@ -3,25 +3,32 @@ import type { NextRequest } from 'next/server'
 import getTokenPayload from './utils/getTokenPayload';
  
 // This function can be marked `async` if using `await` inside
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
 
-    const tokenData: any = getTokenPayload(request);
+    const tokenData = await getTokenPayload(request);
+    const tokenDataJson: any = tokenData.json().then(data => data);
 
     const path = request.nextUrl.pathname;
 
+    if(path.startsWith('/_next/static/') || path.startsWith('/favicon.ico')) {
+        const response = NextResponse.next();
+        response.headers.set('Cache-Control', 'public, max-age=31536000, immutable');
+        return response;
+    }
+
     const isPublicPath = path ==='/sign-in' || path === '/sign-up' || path === '/verify-email';
-    const idSoctorPath = path ==='/list-appoinyment-doctor' || path === '/profile'
+    const isDoctorPath = path ==='/list-appoinyment-doctor' || path === '/profile'
     const isPatientPath = path === '/create-appointment' || path ==='/list-appointment-patient' || path === '/profile'
 
-    const token = request.cookies.get('token')?.value || '';
-
-    if((isPublicPath && token) || (token && isPatientPath && tokenData.role === 'doctor') || (token && idSoctorPath && tokenData.role === 'patient')) {
+    if((isPublicPath && tokenData.status == 200) || (tokenData.status == 200 && isPatientPath && tokenDataJson.role === 'doctor') || (tokenData.status == 200 && isDoctorPath && tokenDataJson.role === 'patient')) {
         return NextResponse.redirect(new URL('/', request.url));
     }
 
-    if((!isPublicPath || idSoctorPath || isPatientPath) && !token) {
+    if((!isPublicPath || isDoctorPath || isPatientPath) && tokenData.status != 200) {
         return NextResponse.redirect(new URL('/sign-in', request.url));
     }
+
+    return NextResponse.next();
 }
  
 // See "Matching Paths" below to learn more
