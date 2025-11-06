@@ -6,7 +6,7 @@ import getTokenPayload from './utils/getTokenPayload';
 export async function middleware(request: NextRequest) {
 
     const tokenData = await getTokenPayload(request);
-    const tokenDataJson: any = tokenData.json().then(data => data);
+    const tokenDataJson: any = await tokenData.json().then(data => data);
 
     const path = request.nextUrl.pathname;
 
@@ -17,15 +17,17 @@ export async function middleware(request: NextRequest) {
     }
 
     const isPublicPath = path ==='/sign-in' || path === '/sign-up' || path === '/verify-email';
-    const isDoctorPath = path ==='/list-appoinyment-doctor' || path === '/profile'
-    const isPatientPath = path === '/create-appointment' || path ==='/list-appointment-patient' || path === '/profile'
 
-    if((isPublicPath && tokenData.status == 200) || (tokenData.status == 200 && isPatientPath && tokenDataJson.role === 'doctor') || (tokenData.status == 200 && isDoctorPath && tokenDataJson.role === 'patient')) {
+    if(isPublicPath && tokenData.status == 200) {
         return NextResponse.redirect(new URL('/', request.url));
     }
 
-    if((!isPublicPath || isDoctorPath || isPatientPath) && tokenData.status != 200) {
+    if(!isPublicPath && tokenData.status != 200) {
         return NextResponse.redirect(new URL('/sign-in', request.url));
+    }
+
+    if(path === '/create-appointment' && tokenDataJson.payload.role != 'patient') {
+        return NextResponse.redirect(new URL('/', request.url));
     }
 
     return NextResponse.next();
@@ -36,8 +38,7 @@ export const config = {
   matcher: [
     '/profile',
     '/create-appointment',
-    '/list-appointment-patient',
-    '/list-appointment-doctor',
+    '/list-appointments',
     '/sign-in',
     '/sign-up',
     '/verify-email'
